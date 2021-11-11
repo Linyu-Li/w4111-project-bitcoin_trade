@@ -9,6 +9,8 @@ A debugger such as "pdb" may be helpful for debugging.
 Read about it online.
 """
 import os
+from click.core import Context
+import requests
   # accessible as a variable in index.html:
 from sqlalchemy import *
 from sqlalchemy.pool import NullPool
@@ -29,7 +31,7 @@ app = Flask(__name__, template_folder=tmpl_dir)
 #
 #     DATABASEURI = "postgresql://gravano:foobar@34.74.246.148/proj1part2"
 #
-DATABASEURI = "postgresql://user:password@34.74.246.148/proj1part2"
+DATABASEURI = "postgresql://zw2723:7071@34.74.246.148/proj1part2"
 
 
 #
@@ -89,6 +91,77 @@ def teardown_request(exception):
 # see for routing: https://flask.palletsprojects.com/en/2.0.x/quickstart/?highlight=routing
 # see for decorators: http://simeonfranklin.com/blog/2012/jul/1/python-decorators-in-12-steps/
 #
+
+@app.route('/exchange/classic')
+def exchange_classic():
+  cursor = g.conn.execute("SELECT * FROM Exchange")
+  exchange_info = []
+  for result in cursor:
+    exchange_info.append(result['exchange_name'])
+  cursor.close()
+
+  exchange_api_rsp = requests.get('https://www.binance.com/api/v3/ticker/24hr')
+
+  context = dict()
+  context['exchange_name'] = exchange_info
+  trade_info = []
+  count = 0
+  for rsp in exchange_api_rsp.json():
+    trade_tuple = dict()
+    trade_tuple['coinId'] = rsp['symbol']
+    trade_tuple['price'] = rsp['lastPrice']
+    trade_tuple['change'] = rsp['priceChange']
+    trade_tuple['volume'] = rsp['volume']
+    trade_info.append(trade_tuple)
+    count+=1
+    if count==20:
+      break
+  items = []
+  for name in exchange_info:
+    item = dict()
+    item['name'] = name
+    item['trade'] = trade_info
+    items.append(item)
+  context['items'] = items
+  return render_template("/exchange/classic.html", **context)
+  
+
+@app.route('/exchange/margin')
+def exchange_margin():
+  cursor = g.conn.execute("SELECT * FROM Exchange")
+  exchange_info = []
+  for result in cursor:
+    exchange_info.append(result['exchange_name'])
+  cursor.close()
+
+  exchange_api_rsp = requests.get('https://www.binance.com/fapi/v1/ticker/24hr')
+
+  context = dict()
+  context['exchange_name'] = exchange_info
+  trade_info = []
+  count = 0
+  for rsp in exchange_api_rsp.json():
+    trade_tuple = dict()
+    trade_tuple['contractId'] = rsp['symbol']
+    trade_tuple['price'] = rsp['lastPrice']
+    trade_tuple['change'] = rsp['priceChange']
+    trade_tuple['volume'] = rsp['volume']
+    trade_info.append(trade_tuple)
+    count+=1
+    if count==20:
+      break
+  items = []
+  for name in exchange_info:
+    item = dict()
+    item['name'] = name
+    item['trade'] = trade_info
+    items.append(item)
+  context['items'] = items
+  return render_template("/exchange/margin.html", **context)
+
+
+
+
 @app.route('/')
 def index():
   """
@@ -123,24 +196,7 @@ def index():
   #
   # You can see an example template in templates/index.html
   #
-  # context are the variables that are passed to the template.
-  # for example, "data" key in the context variable defined below will be 
-  # accessible as a variable in index.html:
-  #
-  #     # will print: [u'grace hopper', u'alan turing', u'ada lovelace']
-  #     <div>{{data}}</div>
-  #     
-  #     # creates a <div> tag for each element in data
-  #     # will print: 
-  #     #
-  #     #   <div>grace hopper</div>
-  #     #   <div>alan turing</div>
-  #     #   <div>ada lovelace</div>
-  #     #
-  #     {% for n in data %}
-  #     <div>{{n}}</div>
-  #     {% endfor %}
-  #
+
   context = dict(data = names)
 
 
