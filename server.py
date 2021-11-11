@@ -159,7 +159,23 @@ def exchange_margin():
   context['items'] = items
   return render_template("/exchange/margin.html", **context)
 
+""" TO BE DEVELOPED FOR LINYU
+@app.route('/user/<uid>/wallet')
+def user_center(uid):
+  return render_template("/user/wallet.html", **context)
 
+
+@app.route('/user/<uid>/miner')
+def user_center(uid):
+  return render_template("/user/miner.html", **context)
+
+
+@app.route('/pool')
+def user_center(uid):
+  return render_template("/pool.html", **context)
+
+
+"""
 
 
 @app.route('/')
