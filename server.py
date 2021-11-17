@@ -447,6 +447,13 @@ def dig(pid):
 
     return redirect('/user/{0}/miner'.format(uid))
 
+@app.route('/stop_machine/<uid>/<did>', methods=['POST'])
+def stop(uid, did):
+    cursor = g.conn.execute("UPDATE dev_belg SET status = {0} WHERE did = '{1}'".format(True, did))
+    cursor.close()
+
+    return redirect('/user/{0}/miner'.format(uid))
+
 
 if __name__ == "__main__":
     import click
