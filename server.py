@@ -125,8 +125,12 @@ def exchange_classic():
     if trade_tuple['coinId'] not in coin_id_list:
         continue
     trade_tuple['price'] = rsp['lastPrice']
+    if float(trade_tuple['price']) <= 0:
+        continue
     trade_tuple['change'] = rsp['priceChange']
     trade_tuple['volume'] = rsp['volume']
+    if float(trade_tuple['volume']) <= 0:
+        continue
     cursor = g.conn.execute("UPDATE coin SET price = {0}, trading_volume = {1} WHERE coin_id = '{2}'".format(
         (rsp['lastPrice']), (rsp['volume']), rsp['symbol']))
     cursor.close()
@@ -173,8 +177,12 @@ def exchange_margin():
     if trade_tuple['contractId'] not in contract_id_list:
         continue
     trade_tuple['price'] = rsp['lastPrice']
+    if float(trade_tuple['price']) <= 0:
+        continue
     trade_tuple['change'] = rsp['priceChange']
     trade_tuple['volume'] = rsp['volume']
+    if float(trade_tuple['volume']) <= 0:
+        continue
     cursor = g.conn.execute("UPDATE contract SET price = {0}, trading_volume = {1} WHERE contract_id = '{2}'".format(float(rsp['lastPrice']), float(rsp['volume']), rsp['symbol']))
     cursor.close()
     trade_info.append(trade_tuple)
@@ -201,6 +209,8 @@ def query_wallet(uid):
         containCoin = dict()
         containCoin['coinId'] = result['coin_id']
         containCoin['amount'] = result['amount']
+        if containCoin['amount'] <= 0:
+            continue
         containCoins.append(containCoin)
     cursor1.close()
 
@@ -210,6 +220,8 @@ def query_wallet(uid):
     for result in cursor2:
         containContract = dict()
         containContract['amount'] = result['amount']
+        if containContract['amount'] <= 0:
+            continue
         containContract['liquidationPrice'] = result['liquidation_price']
         containContract['contractId'] = result['contract_id']
         containContracts.append(containContract)
@@ -223,6 +235,8 @@ def query_wallet(uid):
         tradeCoinHistory['coinID'] = result['coin_id']
         tradeCoinHistory['price'] = result['price']
         tradeCoinHistory['amount'] = result['amount']
+        if tradeCoinHistory['price'] <= 0 or tradeCoinHistory['amount'] <= 0:
+            continue
         tradeCoinHistory['dealTime'] = result['deal_date']
         tradeCoinHistorys.append(tradeCoinHistory)
     cursor3.close()
@@ -235,6 +249,8 @@ def query_wallet(uid):
         tradeMarginHistory['marginID'] = result['contract_id']
         tradeMarginHistory['price'] = result['price']
         tradeMarginHistory['amount'] = result['amount']
+        if tradeMarginHistory['price'] <= 0 or tradeMarginHistory['amount'] <= 0:
+            continue
         tradeMarginHistory['dealTime'] = result['deal_date']
         tradeMarginHistorys.append(tradeMarginHistory)
     cursor4.close()
@@ -324,15 +340,27 @@ def pool_center():
 
 @app.route('/trade/coin/<coin_id>', methods=['POST'])
 def trade_coin(coin_id):
-    # TODO: frontend maybe need to return the eid data
     coin_record = request.form.to_dict()
     method = coin_record.get('method')
     amount = int(coin_record.get('“amount”'))
     uid = coin_record.get('“uid”')
+    if amount <= 0:
+        return '<u>Warning! The amount should be positive. Please input correct amount.</u>'
     deal_date = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
     price = 0
     current_coin_amount = 0
     wid = ''
+
+    # query uid
+    uids = []
+    cursor = g.conn.execute("SELECT * FROM usr")
+    for result in cursor:
+        id = result['uid']
+        uids.append(id)
+    cursor.close
+
+    if uid not in uids:
+        return '<u>Warning! The id does not exist. Please input correct id.</u>'
 
     # query the price
     cursor = g.conn.execute("SELECT * FROM coin WHERE coin_id = (%s)", coin_id)
@@ -353,7 +381,6 @@ def trade_coin(coin_id):
         wid = result['wid']
     cursor.close()
 
-    # TODO: No eid
     if method == 'buy':
         cursor1 = g.conn.execute(
             "INSERT INTO trade_coin (coin_id, uid, price, amount, deal_date) VALUES ('{0}', '{1}', {2}, {3}, TIMESTAMP '{4}')".format(
@@ -364,6 +391,8 @@ def trade_coin(coin_id):
         cursor1.close()
         cursor2.close()
     else:
+        if current_coin_amount - amount <= 0:
+            return '<u>Warning! You do not have plenty amount for selling. Please input correct sell amount.</u>'
         cursor1 = g.conn.execute(
             "INSERT INTO sell_coin (coin_id, uid, deal_date, price) VALUES ('{0}', '{1}', TIMESTAMP '{2}', {3})".format(
                 coin_id, uid, deal_date, price))
@@ -378,14 +407,26 @@ def trade_coin(coin_id):
 
 @app.route('/trade/margin/<contract_id>', methods=['POST'])
 def trade_margin(contract_id):
-    # TODO: frontend maybe need to return the eid data
     margin_record = request.form.to_dict()
     method = margin_record.get('method')
-    amount = int(margin_record.get('“amount”'))
     uid = margin_record.get('“uid”')
+    amount = int(margin_record.get('“amount”'))
+    if amount <= 0:
+        return '<u>Warning! The amount should be positive. Please input correct amount.</u>'
     deal_date = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
     price = 0
     current_contract_amount = 0
+
+    # query uid
+    uids = []
+    cursor = g.conn.execute("SELECT * FROM usr")
+    for result in cursor:
+        id = result['uid']
+        uids.append(id)
+    cursor.close
+
+    if uid not in uids:
+        return '<u>Warning! The id does not exist. Please input correct id.</u>'
 
     # query the price
     cursor = g.conn.execute("SELECT * FROM contract WHERE contract_id = (%s)", contract_id)
@@ -407,6 +448,8 @@ def trade_margin(contract_id):
         cursor1.close()
         cursor2.close()
     else:
+        if current_contract_amount - amount <= 0:
+            return '<u>Warning! You do not have plenty amount for selling. Please input correct sell amount.</u>'
         cursor1 = g.conn.execute("INSERT INTO sell_contract (contract_id, uid, deal_time, price) VALUES ('{0}', '{1}', TIMESTAMP '{2}', {3})".format(contract_id, uid, deal_date, price))
         cursor2 = g.conn.execute(
             "INSERT INTO contain_contract (uid, contract_id, amount) VALUES ('{0}', '{1}', {2}) on conflict (uid, contract_id) DO UPDATE SET amount = {3};".format(uid, contract_id, current_contract_amount - amount, current_contract_amount - amount))
