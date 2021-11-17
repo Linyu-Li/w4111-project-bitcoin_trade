@@ -33,22 +33,20 @@
 
     <div class="d-flex align-items-start">
         <div class="nav flex-column nav-pills me-3" id="v-pills-tab" role="tablist" aria-orientation="vertical">
-          {% for n in exchange_name %}
+          {% for t in items %}
           {% if loop.first %}
-          <button class="nav-link show active" id="v-pills-{{n}}-tab" data-bs-toggle="pill" data-bs-target="#v-pills-{{n}}" type="button" role="tab" aria-controls="v-pills-home" aria-selected="true">{{n}}</button>
+          <button class="nav-link active" id="v-pills{{t.name}}tab" data-bs-toggle="pill" data-bs-target="#v-pills{{t.name}}" type="button" role="tab" aria-controls="v-pills{{t.name}}" aria-selected="true">{{t.name}}</button>
           {% else %}
-          <button class="nav-link" id="v-pills-{{n}}-tab" data-bs-toggle="pill" data-bs-target="#v-pills-{{n}}" type="button" role="tab" aria-controls="v-pills-home" aria-selected="true">{{n}}</button>
+          <button class="nav-link" id="v-pills{{t.name}}tab" data-bs-toggle="pill" data-bs-target="#v-pills{{t.name}}" type="button" role="tab" aria-controls="v-pills{{t.name}}" aria-selected="false">{{t.name}}</button>
           {% endif %}
-          <!--<button class="nav-link" id="v-pills-profile-tab" data-bs-toggle="pill" data-bs-target="#v-pills-profile" type="button" role="tab" aria-controls="v-pills-profile" aria-selected="false">Profile</button>-->
           {% endfor %}
-
         </div>
         <div class="tab-content" id="v-pills-tabContent">
           {% for item in items %}
           {% if loop.first %}
-          <div class="tab-pane fade show active" id="v-pills-{{item.name}}" role="tabpanel" aria-labelledby="v-pills-{{item.name}}-tab">
+          <div class="tab-pane fade show active" id="v-pills{{item.name}}" role="tabpanel" aria-labelledby="v-pills{{item.name}}-tab">
           {% else %}
-          <div class="tab-pane fade" id="v-pills-{{item.name}}" role="tabpanel" aria-labelledby="v-pills-{{item.name}}-tab">
+          <div class="tab-pane fade" id="v-pills{{item.name}}" role="tabpanel" aria-labelledby="v-pills{{item.name}}-tab">
           {% endif %}
             <table class="table table-hover">
                 <thead>
@@ -67,7 +65,32 @@
                     <td>{{t.price}}</td>
                     <td>{{t.change}}</td>
                     <td>{{t.volume}}</td>
-                    <td><button type="button" class="btn btn-outline-primary">Trade</button></td>
+                    <td><button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#exampleModal{{t.contractId}}{{item.name}}">Trade</button></td>
+                    <div class="modal fade" id="exampleModal{{t.contractId}}{{item.name}}" tabindex="-1" aria-labelledby="exampleModalLabel{{t.contractId}}{{item.name}}" aria-hidden="true">
+                      <div class="modal-dialog">
+                        <div class="modal-content">
+                          <div class="modal-header">
+                            <h5 class="modal-title" id="exampleModalLabel{{t.contractId}}{{item.name}}">New Order</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                          </div>
+                          <div class="modal-body">
+                            <form action='/trade/margin/{{t.contractId}}' method='post'>
+                              <div class="mb-3">
+                                <label class="col-form-label">Amount:</label>
+                                <input type="text" class="form-control" id="amount" name=“amount”>
+                                <label class="col-form-label">Type your id please:</label>
+                                <input type="text" class="form-control" id="uid" name=“uid”>
+                                <input type="submit" name="method" value="buy" class="btn btn-primary">
+                                <input type="submit" name="method" value="sell" class="btn btn-primary">
+                              </div>
+                            </form>
+                          </div>
+                          <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </tr>
                   {% endfor %}
                 </tbody>

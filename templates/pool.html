@@ -35,7 +35,41 @@
               <td>{{t.pid}}</td>
               <td>{{t.hashrate}}</td>
               <td>{{t.taxFee}}</td>
-              <td><button type="button" class="btn btn-outline-primary">Dig</button></td>
+              <td><button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#exampleModal{{t.pid}}">Dig</button></td>
+              <div class="modal fade" id="exampleModal{{t.pid}}" tabindex="-1" aria-labelledby="exampleModalLabel{{t.pid}}" aria-hidden="true">
+                <div class="modal-dialog">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h5 class="modal-title" id="exampleModalLabel{{t.pid}}">New Dig Mission</h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form action='/dig/{{t.pid}}' method='post'>
+                    <div class="modal-body">  
+                        <div class="mb-3">
+                          <label class="col-form-label">machine:</label>
+                          <select class="form-select" aria-label="Default select example" name="did">
+                            <option selected>Open this select menu</option>
+                            {% for t in deviceInfo %}
+                            <option value="{{t.did}}">{{t.did}}-{{t.deviceName}}</option>
+                            {% endfor %}
+                          </select>
+                          <label class="col-form-label">coin:</label>
+                          <select class="form-select" aria-label="Default select example" name="coin_id">
+                            <option selected>Open this select menu</option>
+                            {% for t in coinName %}
+                            <option value="{{t}}">{{t}}</option>
+                            {% endfor %}
+                          </select>
+                        </div>                    
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                      <button type="submit" class="btn btn-primary">Start</button>
+                    </div>
+                  </form>
+                  </div>
+                </div>
+              </div>
             </tr>
             {% endfor %}
         </tbody>

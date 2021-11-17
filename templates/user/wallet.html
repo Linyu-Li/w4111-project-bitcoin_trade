@@ -21,10 +21,10 @@
           <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav">
               <li class="nav-item">
-                <a class="nav-link active" aria-current="page" href="/exchange/classic">Wallet</a>
+                <a class="nav-link active" aria-current="page" href="/user/{{uid}}/wallet">Wallet</a>
               </li>
               <li class="nav-item">
-                <a class="nav-link" href="/exchange/margin">Miner</a>
+                <a class="nav-link" href="/user/{{uid}}/miner">Miner</a>
               </li>
             </ul>
           </div>
@@ -66,9 +66,9 @@
                   </tr>
                 </thead>
                 <tbody>
-                  {% for t in containCoin %}
+                  {% for t in containContract %}
                   <tr>
-                    <td>{{t.coinId}}</td>
+                    <td>{{t.contractId}}</td>
                     <td>{{t.amount}}</td>
                     <td>{{t.liquidationPrice}}</td>
                   </tr>
