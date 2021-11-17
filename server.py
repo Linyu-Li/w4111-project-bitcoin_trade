@@ -214,8 +214,7 @@ def query_wallet(uid):
         containCoins.append(containCoin)
     cursor1.close()
 
-    cursor2 = g.conn.execute("SELECT * FROM contain_contract C, trade_contract T " +
-                             "WHERE C.uid = (%s) AND C.contract_id = T.contract_id AND C.uid = T.uid", uid)
+    cursor2 = g.conn.execute("SELECT * FROM contain_contract C WHERE C.uid = (%s)", uid)
     containContracts = []
     for result in cursor2:
         containContract = dict()
@@ -391,7 +390,7 @@ def trade_coin(coin_id):
         cursor1.close()
         cursor2.close()
     else:
-        if current_coin_amount - amount <= 0:
+        if current_coin_amount - amount < 0:
             return '<u>Warning! You do not have plenty amount for selling. Please input correct sell amount.</u>'
         cursor1 = g.conn.execute(
             "INSERT INTO sell_coin (coin_id, uid, deal_date, price) VALUES ('{0}', '{1}', TIMESTAMP '{2}', {3})".format(
@@ -440,15 +439,14 @@ def trade_margin(contract_id):
         current_contract_amount = result['amount']
     cursor.close()
 
-    # TODO: No eid
     if method == 'buy':
         random_liquidation_price = round(random.uniform(0, price), 2)
         cursor1 = g.conn.execute("INSERT INTO trade_contract (contract_id, uid, price, amount, liquidation_price, deal_date) VALUES ('{0}', '{1}', {2}, {3}, {4}, TIMESTAMP '{5}')".format(contract_id, uid, price, amount, random_liquidation_price, deal_date))
-        cursor2 = g.conn.execute("INSERT INTO contain_contract (uid, contract_id, amount, liquidation_price) VALUES ('{0}', '{1}', {2}, {3}) on conflict (uid, contract_id) DO UPDATE SET amount = {4};".format(uid, contract_id, current_contract_amount+amount, random_liquidation_price, current_contract_amount+amount))
+        cursor2 = g.conn.execute("INSERT INTO contain_contract (uid, contract_id, amount, liquidation_price) VALUES ('{0}', '{1}', {2}, {3}) on conflict (uid, contract_id) DO UPDATE SET amount = {4}, liquidation_price = {5};".format(uid, contract_id, current_contract_amount+amount, random_liquidation_price, current_contract_amount+amount, random_liquidation_price))
         cursor1.close()
         cursor2.close()
     else:
-        if current_contract_amount - amount <= 0:
+        if current_contract_amount - amount < 0:
             return '<u>Warning! You do not have plenty amount for selling. Please input correct sell amount.</u>'
         cursor1 = g.conn.execute("INSERT INTO sell_contract (contract_id, uid, deal_time, price) VALUES ('{0}', '{1}', TIMESTAMP '{2}', {3})".format(contract_id, uid, deal_date, price))
         cursor2 = g.conn.execute(
